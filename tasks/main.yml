@@ -1,0 +1,37 @@
+- name: Checking Version of EL Install
+  raw:
+    'grep -q "release 5" /etc/redhat-release'
+  register: el_check
+  ignore_errors: True
+
+- name: Running raw to install Ansible Dependencies
+  raw:
+    'yum install -y python-simplejson'
+  when: el_check is succeeded
+
+- name: Running Setup To Gather Facts
+  setup:
+  when: el_check is succeeded
+
+#- name: Validate that we are running EL 5
+#  debug:
+#    msg: "Running EL 5 or derivative"
+#  register: el_check
+#  when:
+#    - ansible_distribution_major_version|int == 5
+
+- name: Install EPEL 5 Repository in yum.repos.d
+  copy:
+    src: files/etc/yum.repos.d/epel-5-archive.repo
+    dest: /etc/yum.repos.d/epel-5-archive.repo
+    mode: '0644'
+    owner: root
+    group: root
+  when: el_check is succeeded
+
+- name: Install python26 from EPEL 5 Archive
+  yum:
+    name: python26
+    state: present
+  when: el_check is succeeded
+
